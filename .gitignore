@@ -1,0 +1,6 @@
+.worktrees/
+build/
+results/*.csv
+tests/data/identity3.mtx
+tests/data/illcond.mtx
+tests/data/sym_test.mtx
