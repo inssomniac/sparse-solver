@@ -2,6 +2,9 @@
 set -euo pipefail
 
 ARCH=$(uname -m)
+SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
+PROJECT_DIR=$(cd "${SCRIPT_DIR}/.." && pwd)
+
 echo "=== Installing solver_bench dependencies on $(uname -s) ${ARCH} ==="
 
 apt-get update -qq
@@ -15,9 +18,10 @@ apt-get install -y \
     libsuperlu-dev \
     time
 
+WITH_PARDISO=OFF
+
 if [ "${ARCH}" != "riscv64" ]; then
     echo "=== Installing Intel MKL (PARDISO) ==="
-    # Intel oneAPI apt repo
     wget -qO- https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB \
         | gpg --dearmor -o /usr/share/keyrings/oneapi-archive-keyring.gpg
     echo "deb [signed-by=/usr/share/keyrings/oneapi-archive-keyring.gpg] \
@@ -25,17 +29,57 @@ https://apt.repos.intel.com/oneapi all main" \
         > /etc/apt/sources.list.d/oneAPI.list
     apt-get update -qq
     apt-get install -y intel-oneapi-mkl intel-oneapi-mkl-devel
-    echo "source /opt/intel/oneapi/setvars.sh" >> /etc/bash.bashrc
-    echo "=== MKL installed. Run: source /opt/intel/oneapi/setvars.sh ==="
+
+    # Активировать окружение Intel для текущей сессии
+    # setvars.sh использует необъявленные переменные — временно снимаем set -u
+    set +u
+    source /opt/intel/oneapi/setvars.sh || true
+    set -u
+
+    # Прописать автозагрузку для всех пользователей
+    if ! grep -q "setvars.sh" /etc/bash.bashrc; then
+        echo "source /opt/intel/oneapi/setvars.sh > /dev/null 2>&1" >> /etc/bash.bashrc
+    fi
+
+    # Прописать LD_PRELOAD для iomp5 чтобы libmkl_intel_thread находил его при запуске
+    IOMP5=$(find /opt/intel/oneapi -name "libiomp5.so" 2>/dev/null | head -1)
+    if [ -n "${IOMP5}" ]; then
+        if ! grep -q "libiomp5" /etc/bash.bashrc; then
+            echo "export LD_PRELOAD=${IOMP5}\${LD_PRELOAD:+:\$LD_PRELOAD}" >> /etc/bash.bashrc
+        fi
+        export LD_PRELOAD="${IOMP5}${LD_PRELOAD:+:$LD_PRELOAD}"
+    fi
+
+    WITH_PARDISO=ON
+    echo "=== MKL installed and activated ==="
 else
     echo "=== RISC-V detected: skipping Intel MKL (PARDISO not supported) ==="
 fi
 
-echo "=== Done. Build with: ==="
-echo "  mkdir build && cd build"
-if [ "${ARCH}" != "riscv64" ]; then
-    echo "  cmake .. -DWITH_MUMPS=ON -DWITH_SUPERLU=ON -DWITH_PARDISO=ON"
+echo "=== Building solver_bench ==="
+cd "${PROJECT_DIR}"
+mkdir -p build
+cd build
+cmake .. \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DWITH_MUMPS=ON \
+    -DWITH_SUPERLU=ON \
+    -DWITH_PARDISO=${WITH_PARDISO}
+make -j$(nproc)
+
+echo "=== Running tests ==="
+cd "${PROJECT_DIR}"
+./build/tests
+
+echo ""
+echo "=== All done! Run benchmark with: ==="
+echo "  cd ${PROJECT_DIR}"
+echo "  ./build/solver_bench \\"
+echo "    --matrices ./matrices/ \\"
+if [ "${WITH_PARDISO}" = "ON" ]; then
+    echo "    --solvers mumps,superlu,pardiso \\"
 else
-    echo "  cmake .. -DWITH_MUMPS=ON -DWITH_SUPERLU=ON"
+    echo "    --solvers mumps,superlu \\"
 fi
-echo "  make -j\$(nproc)"
+echo "    --threads 1,2,4,8 \\"
+echo "    --output ./results/bench.csv"

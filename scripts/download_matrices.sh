@@ -3,7 +3,8 @@
 # Sizes: ~1k, ~4k, ~7k, ~14k, ~35k, ~70k rows
 set -euo pipefail
 
-DIR="${1:-$(dirname "$0")/../matrices}"
+DIR="$(cd "$(dirname "$0")/.." && pwd)/matrices"
+DIR="${1:-$DIR}"
 mkdir -p "$DIR"
 cd "$DIR"
 
