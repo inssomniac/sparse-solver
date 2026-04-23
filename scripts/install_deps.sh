@@ -14,9 +14,31 @@ apt-get install -y \
     libopenmpi-dev openmpi-bin \
     liblapack-dev liblapacke-dev \
     libscalapack-mpi-dev \
-    libmumps-dev \
+    libmetis-dev libscotch-dev \
     libsuperlu-dev \
     time
+
+echo "=== Building MUMPS 5.8.2 from source ==="
+MUMPS_VERSION="5.8.2"
+MUMPS_ARCHIVE="MUMPS_${MUMPS_VERSION}.tar.gz"
+MUMPS_URL="https://coin-or-tools.github.io/ThirdParty-Mumps/${MUMPS_ARCHIVE}"
+MUMPS_DIR="/tmp/MUMPS_${MUMPS_VERSION}"
+
+if [ ! -f "/usr/local/lib/libdmumps.a" ]; then
+    cd /tmp
+    wget -q "${MUMPS_URL}" -O "${MUMPS_ARCHIVE}"
+    tar -xzf "${MUMPS_ARCHIVE}"
+    cp "${MUMPS_DIR}/Make.inc/Makefile.debian.PAR" "${MUMPS_DIR}/Makefile.inc"
+    cd "${MUMPS_DIR}"
+    make -j$(nproc) d
+    cp include/*.h /usr/local/include/
+    cp lib/libdmumps.a lib/libmumps_common.a /usr/local/lib/
+    cp PORD/lib/libpord.a /usr/local/lib/
+    ldconfig
+    echo "=== MUMPS ${MUMPS_VERSION} installed ==="
+else
+    echo "=== MUMPS already installed, skipping ==="
+fi
 
 WITH_PARDISO=OFF
 

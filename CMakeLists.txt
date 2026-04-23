@@ -30,17 +30,22 @@ set(BENCH_SOURCES
 if(WITH_MUMPS)
   list(APPEND BENCH_SOURCES src/mumps_solver.cpp)
   add_compile_definitions(HAVE_MUMPS)
-  find_package(MUMPS QUIET)
-  if(NOT MUMPS_FOUND)
-    find_library(MUMPS_LIB NAMES dmumps dmumps_seq REQUIRED)
-    find_library(MUMPS_COMMON NAMES mumps_common mumps_common_seq REQUIRED)
-    find_library(MUMPS_PORD NAMES pord QUIET)
-    set(MUMPS_LIBRARIES ${MUMPS_LIB} ${MUMPS_COMMON})
-    if(MUMPS_PORD)
-      list(APPEND MUMPS_LIBRARIES ${MUMPS_PORD})
-    endif()
-    find_path(MUMPS_INCLUDE_DIR dmumps_c.h REQUIRED)
+  find_library(MUMPS_LIB NAMES dmumps
+    HINTS /usr/local/lib /usr/lib
+    REQUIRED)
+  find_library(MUMPS_COMMON NAMES mumps_common
+    HINTS /usr/local/lib /usr/lib
+    REQUIRED)
+  find_library(MUMPS_PORD NAMES pord
+    HINTS /usr/local/lib /usr/lib
+    QUIET)
+  set(MUMPS_LIBRARIES ${MUMPS_LIB} ${MUMPS_COMMON})
+  if(MUMPS_PORD)
+    list(APPEND MUMPS_LIBRARIES ${MUMPS_PORD})
   endif()
+  find_path(MUMPS_INCLUDE_DIR dmumps_c.h
+    HINTS /usr/local/include /usr/include
+    REQUIRED)
 endif()
 
 if(WITH_SUPERLU)
