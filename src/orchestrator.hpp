@@ -10,6 +10,7 @@ struct RunResult {
     double      time_solve_sec     = -1.0;
     double      rel_residual       = -1.0;
     long        memory_mb          = -1;
+    long        memory_solve_mb    = -1;
     long        nnz_factors        = -1;
     std::string reordering;
 };

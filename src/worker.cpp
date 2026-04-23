@@ -5,8 +5,22 @@
 #include "solver_base.hpp"
 #include <memory>
 #include <iostream>
+#include <fstream>
 #include <cstdlib>
 #include <string>
+
+static long rss_kb() {
+    std::ifstream f("/proc/self/status");
+    std::string line;
+    while (std::getline(f, line)) {
+        if (line.rfind("VmRSS:", 0) == 0) {
+            long kb = 0;
+            sscanf(line.c_str(), "VmRSS: %ld", &kb);
+            return kb;
+        }
+    }
+    return 0;
+}
 
 #ifdef HAVE_MUMPS
 #include "mumps_solver.hpp"
@@ -42,7 +56,10 @@ int run_worker(const Config& cfg) {
         auto solver       = make_solver(cfg.worker_solver);
         if (!solver) return 1;
 
+        long rss_before = rss_kb();
         auto result = solver->solve(A, b, x_true);
+        long rss_after  = rss_kb();
+        long memory_solve_mb = (rss_after - rss_before + 512) / 1024;
 
         std::cout << "status="        << result.status             << "\n";
         std::cout << "time_analyze="  << result.time_analyze_sec   << "\n";
@@ -50,7 +67,8 @@ int run_worker(const Config& cfg) {
         std::cout << "time_solve="     << result.time_solve_sec     << "\n";
         std::cout << "rel_residual="   << result.rel_residual       << "\n";
         std::cout << "nnz_factors="    << result.nnz_factors        << "\n";
-        std::cout << "reordering="     << result.reordering         << "\n";
+        std::cout << "reordering="      << result.reordering         << "\n";
+        std::cout << "memory_solve_mb=" << memory_solve_mb           << "\n";
         std::cout.flush();
         return result.status == "OK" ? 0 : 1;
     } catch (const std::exception& e) {
