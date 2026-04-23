@@ -73,7 +73,7 @@ SolveResult PardisoSolver::solve(const SparseMatrix& A,
 
     std::vector<double> x(n);
 
-    phase = 12;
+    phase = 11;
     auto t0 = std::chrono::high_resolution_clock::now();
     pardiso(pt, &maxfct, &mnum, &mtype, &phase, &nn,
             a_csr.data(), ia.data(), ja.data(),
@@ -88,7 +88,32 @@ SolveResult PardisoSolver::solve(const SparseMatrix& A,
         result.status = "FAIL";
         return result;
     }
-    result.time_factorize_sec = std::chrono::duration<double>(t1 - t0).count();
+    result.time_analyze_sec = std::chrono::duration<double>(t1 - t0).count();
+    {
+        static const char* ord_names[] = {"min_degree", "", "METIS", "parallel_ND"};
+        int ord = static_cast<int>(iparm[1]);
+        if (ord >= 0 && ord <= 3 && ord_names[ord][0])
+            result.reordering = ord_names[ord];
+        else
+            result.reordering = std::to_string(ord);
+    }
+
+    phase = 22;
+    auto t2 = std::chrono::high_resolution_clock::now();
+    pardiso(pt, &maxfct, &mnum, &mtype, &phase, &nn,
+            a_csr.data(), ia.data(), ja.data(),
+            nullptr, &nrhs, iparm, &msglvl,
+            nullptr, nullptr, &error);
+    auto t3 = std::chrono::high_resolution_clock::now();
+
+    if (error != 0) {
+        phase = -1; pardiso(pt, &maxfct, &mnum, &mtype, &phase, &nn,
+                             nullptr, ia.data(), ja.data(), nullptr, &nrhs,
+                             iparm, &msglvl, nullptr, nullptr, &error);
+        result.status = "FAIL";
+        return result;
+    }
+    result.time_factorize_sec = std::chrono::duration<double>(t3 - t2).count();
     result.nnz_factors        = iparm[17];
 
     phase = 33;

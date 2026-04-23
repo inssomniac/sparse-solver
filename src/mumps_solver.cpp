@@ -59,7 +59,11 @@ SolveResult MumpsSolver::solve(const SparseMatrix& A,
     id.icntl[12] = 1;
     id.cntl[0]   = 0.01;
 
-    id.job = 4;
+    static const char* ordering_names[] = {
+        "AMD", "user", "AMF", "SCOTCH", "PORD", "METIS", "QAMD", "auto"
+    };
+
+    id.job = 1;
     auto t0 = std::chrono::high_resolution_clock::now();
     dmumps_c(&id);
     auto t1 = std::chrono::high_resolution_clock::now();
@@ -68,10 +72,14 @@ SolveResult MumpsSolver::solve(const SparseMatrix& A,
         id.job = -2; dmumps_c(&id);
         return result;
     }
-    result.time_factorize_sec =
-        std::chrono::duration<double>(t1 - t0).count();
+    result.time_analyze_sec = std::chrono::duration<double>(t1 - t0).count();
+    {
+        int ord = id.infog[6];
+        if (ord >= 0 && ord <= 7) result.reordering = ordering_names[ord];
+        else                      result.reordering = std::to_string(ord);
+    }
 
-    id.job = 3;
+    id.job = 2;
     auto t2 = std::chrono::high_resolution_clock::now();
     dmumps_c(&id);
     auto t3 = std::chrono::high_resolution_clock::now();
@@ -80,8 +88,19 @@ SolveResult MumpsSolver::solve(const SparseMatrix& A,
         id.job = -2; dmumps_c(&id);
         return result;
     }
+    result.time_factorize_sec = std::chrono::duration<double>(t3 - t2).count();
+
+    id.job = 3;
+    auto t4 = std::chrono::high_resolution_clock::now();
+    dmumps_c(&id);
+    auto t5 = std::chrono::high_resolution_clock::now();
+    if (id.infog[0] < 0) {
+        result.status = "FAIL";
+        id.job = -2; dmumps_c(&id);
+        return result;
+    }
     result.time_solve_sec =
-        std::chrono::duration<double>(t3 - t2).count();
+        std::chrono::duration<double>(t5 - t4).count();
 
     result.rel_residual = rel_residual(A, rhs, b);
     result.nnz_factors  = id.infog[19];

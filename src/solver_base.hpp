@@ -5,10 +5,12 @@
 
 struct SolveResult {
     std::string status             = "FAIL";
+    double      time_analyze_sec   = -1.0;
     double      time_factorize_sec = -1.0;
     double      time_solve_sec     = -1.0;
     double      rel_residual       = -1.0;
     long        nnz_factors        = -1;
+    std::string reordering;
 };
 
 class SolverBase {

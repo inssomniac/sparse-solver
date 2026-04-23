@@ -43,6 +43,7 @@ SolveResult SuperluSolver::solve(const SparseMatrix& A,
         result.rel_residual       = rel_residual(A, rhs, b);
         result.nnz_factors        = static_cast<long>(((SCformat*)L.Store)->nnz) +
                                     static_cast<long>(((NCformat*)U.Store)->nnz);
+        result.reordering         = "COLAMD";
         result.status             = "OK";
     } else {
         result.status = "FAIL";

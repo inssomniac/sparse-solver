@@ -10,11 +10,13 @@ struct CsvRow {
     double      cond_est       = -1.0;
     std::string solver;
     std::string status;
+    double      time_analyze   = -1.0;
     double      time_factorize = -1.0;
     double      time_solve     = -1.0;
     double      rel_residual   = -1.0;
     long        memory_mb      = -1;
     long        nnz_factors    = -1;
+    std::string reordering;
     int         threads        = 1;
 };
 

@@ -113,10 +113,12 @@ RunResult launch_worker(const std::string& exe_path,
     {
         auto kv = parse_kv(child_stdout);
         if (kv.count("status"))         result.status             = kv["status"];
+        if (kv.count("time_analyze"))   result.time_analyze_sec   = std::stod(kv["time_analyze"]);
         if (kv.count("time_factorize")) result.time_factorize_sec = std::stod(kv["time_factorize"]);
         if (kv.count("time_solve"))     result.time_solve_sec     = std::stod(kv["time_solve"]);
         if (kv.count("rel_residual"))   result.rel_residual       = std::stod(kv["rel_residual"]);
         if (kv.count("nnz_factors"))    result.nnz_factors        = std::stol(kv["nnz_factors"]);
+        if (kv.count("reordering"))     result.reordering         = kv["reordering"];
     }
 
     long kb = parse_peak_rss_kb(child_stderr);
@@ -155,11 +157,13 @@ void run_orchestrator(const Config& cfg, CsvWriter& csv) {
                 row.cond_est       = (kappa > 0) ? kappa : -1.0;
                 row.solver         = solver;
                 row.status         = res.status;
+                row.time_analyze   = res.time_analyze_sec;
                 row.time_factorize = res.time_factorize_sec;
                 row.time_solve     = res.time_solve_sec;
                 row.rel_residual   = res.rel_residual;
                 row.memory_mb      = res.memory_mb;
                 row.nnz_factors    = res.nnz_factors;
+                row.reordering     = res.reordering;
                 row.threads        = nthreads;
                 csv.write(row);
             }
