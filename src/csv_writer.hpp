@@ -14,6 +14,7 @@ struct CsvRow {
     double      time_solve     = -1.0;
     double      rel_residual   = -1.0;
     long        memory_mb      = -1;
+    long        nnz_factors    = -1;
     int         threads        = 1;
 };
 

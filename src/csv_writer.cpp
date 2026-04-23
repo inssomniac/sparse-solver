@@ -3,7 +3,7 @@
 
 static const char* HEADER =
     "matrix_name,rows,nnz,density,cond_est,solver,status,"
-    "time_factorize_sec,time_solve_sec,rel_residual,memory_mb,iterations,threads\n";
+    "time_factorize_sec,time_solve_sec,rel_residual,memory_mb,iterations,nnz_factors,threads\n";
 
 CsvWriter::CsvWriter(std::ostream& out) : out_(out) {
     out_ << HEADER;
@@ -34,7 +34,9 @@ void CsvWriter::write(const CsvRow& row) {
     write_double(out_, row.rel_residual);
     out_ << ",";
     write_long(out_, row.memory_mb);
-    out_ << ","
-         << "," << row.threads << "\n";
+    out_ << ",";
+    out_ << ",";
+    write_long(out_, row.nnz_factors);
+    out_ << "," << row.threads << "\n";
     out_.flush();
 }

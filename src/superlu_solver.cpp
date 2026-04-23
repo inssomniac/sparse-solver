@@ -41,6 +41,8 @@ SolveResult SuperluSolver::solve(const SparseMatrix& A,
         result.time_factorize_sec = std::chrono::duration<double>(t1 - t0).count();
         result.time_solve_sec     = 0.0;
         result.rel_residual       = rel_residual(A, rhs, b);
+        result.nnz_factors        = static_cast<long>(((SCformat*)L.Store)->nnz) +
+                                    static_cast<long>(((NCformat*)U.Store)->nnz);
         result.status             = "OK";
     } else {
         result.status = "FAIL";

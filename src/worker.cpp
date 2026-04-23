@@ -48,6 +48,7 @@ int run_worker(const Config& cfg) {
         std::cout << "time_factorize=" << result.time_factorize_sec << "\n";
         std::cout << "time_solve="     << result.time_solve_sec     << "\n";
         std::cout << "rel_residual="   << result.rel_residual       << "\n";
+        std::cout << "nnz_factors="    << result.nnz_factors        << "\n";
         std::cout.flush();
         return result.status == "OK" ? 0 : 1;
     } catch (const std::exception& e) {

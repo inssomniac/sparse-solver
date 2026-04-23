@@ -89,6 +89,7 @@ SolveResult PardisoSolver::solve(const SparseMatrix& A,
         return result;
     }
     result.time_factorize_sec = std::chrono::duration<double>(t1 - t0).count();
+    result.nnz_factors        = iparm[17];
 
     phase = 33;
     std::vector<double> rhs(b.begin(), b.end());

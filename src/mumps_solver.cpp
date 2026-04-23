@@ -84,6 +84,7 @@ SolveResult MumpsSolver::solve(const SparseMatrix& A,
         std::chrono::duration<double>(t3 - t2).count();
 
     result.rel_residual = rel_residual(A, rhs, b);
+    result.nnz_factors  = id.infog[19];
     result.status = "OK";
 
     id.job = -2;
