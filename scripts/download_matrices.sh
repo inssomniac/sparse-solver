@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Download a representative set of unsymmetric sparse matrices from SuiteSparse
-# Sizes: ~1k, ~4k, ~7k, ~14k, ~35k, ~70k rows
+# Sizes: ~1k–~900k rows
 set -euo pipefail
 
 DIR="$(cd "$(dirname "$0")/.." && pwd)/matrices"
@@ -45,6 +45,18 @@ download Mallya      lhr34       "35k"
 
 # ~70k rows
 download Mallya      lhr71       "70k"
+
+# ~116k rows — Norris/torso2: bioelectric field simulation, n=115,967 nnz=1.0M
+download Norris      torso2      "116k"
+
+# ~171k rows — Hamm/scircuit: VLSI circuit simulation, n=170,998 nnz=959k
+download Hamm        scircuit    "171k"
+
+# ~1.27M rows — Bourchtein/atmosmodd: atmospheric modelling, n=1,270,432 nnz=8.8M
+download Bourchtein  atmosmodd   "1.27M"
+
+# ~1.49M rows — Bourchtein/atmosmodl: atmospheric modelling (larger), n=1,489,752 nnz=10.3M
+download Bourchtein  atmosmodl   "1.49M"
 
 echo ""
 echo "=== Done. Matrices in ${DIR}: ==="
