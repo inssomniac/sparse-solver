@@ -118,14 +118,14 @@ SolveResult PardisoSolver::solve(const SparseMatrix& A,
 
     phase = 33;
     std::vector<double> rhs(b.begin(), b.end());
-    auto t2 = std::chrono::high_resolution_clock::now();
+    auto t4 = std::chrono::high_resolution_clock::now();
     pardiso(pt, &maxfct, &mnum, &mtype, &phase, &nn,
             a_csr.data(), ia.data(), ja.data(),
             nullptr, &nrhs, iparm, &msglvl,
             rhs.data(), x.data(), &error);
-    auto t3 = std::chrono::high_resolution_clock::now();
+    auto t5 = std::chrono::high_resolution_clock::now();
 
-    result.time_solve_sec = std::chrono::duration<double>(t3 - t2).count();
+    result.time_solve_sec = std::chrono::duration<double>(t5 - t4).count();
     result.rel_residual   = rel_residual(A, x, b);
     result.status         = "OK";
 
