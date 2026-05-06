@@ -30,22 +30,32 @@ set(BENCH_SOURCES
 if(WITH_MUMPS)
   list(APPEND BENCH_SOURCES src/mumps_solver.cpp)
   add_compile_definitions(HAVE_MUMPS)
-  find_library(MUMPS_LIB NAMES dmumps
-    HINTS /usr/local/lib /usr/lib
-    REQUIRED)
-  find_library(MUMPS_COMMON NAMES mumps_common
-    HINTS /usr/local/lib /usr/lib
-    REQUIRED)
-  find_library(MUMPS_PORD NAMES pord
-    HINTS /usr/local/lib /usr/lib
-    QUIET)
-  set(MUMPS_LIBRARIES ${MUMPS_LIB} ${MUMPS_COMMON})
-  if(MUMPS_PORD)
-    list(APPEND MUMPS_LIBRARIES ${MUMPS_PORD})
+  find_package(MUMPS QUIET)
+  if(NOT MUMPS_FOUND)
+    find_library(MUMPS_LIB NAMES dmumps dmumps_seq REQUIRED)
+    find_library(MUMPS_COMMON NAMES mumps_common mumps_common_seq REQUIRED)
+    find_library(MUMPS_PORD NAMES pord QUIET)
+    set(MUMPS_LIBRARIES ${MUMPS_LIB} ${MUMPS_COMMON})
+    if(MUMPS_PORD)
+      list(APPEND MUMPS_LIBRARIES ${MUMPS_PORD})
+    endif()
+    # Static MUMPS built from source needs Fortran runtime + MPI Fortran + ordering libs
+    find_library(GFORTRAN_LIB gfortran)
+    if(GFORTRAN_LIB)
+      list(APPEND MUMPS_LIBRARIES ${GFORTRAN_LIB})
+    endif()
+    find_library(MPI_MPIFH_LIB mpi_mpifh)
+    if(MPI_MPIFH_LIB)
+      list(APPEND MUMPS_LIBRARIES ${MPI_MPIFH_LIB})
+    endif()
+    foreach(_lib scotch esmumps scotcherr metis)
+      find_library(_found_${_lib} ${_lib})
+      if(_found_${_lib})
+        list(APPEND MUMPS_LIBRARIES ${_found_${_lib}})
+      endif()
+    endforeach()
+    find_path(MUMPS_INCLUDE_DIR dmumps_c.h REQUIRED)
   endif()
-  find_path(MUMPS_INCLUDE_DIR dmumps_c.h
-    HINTS /usr/local/include /usr/include
-    REQUIRED)
 endif()
 
 if(WITH_SUPERLU)
